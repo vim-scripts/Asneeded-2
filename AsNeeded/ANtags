@@ -1,0 +1,9 @@
+c	ANmap	anmap.vim
+c	ANfunc	anplus.vim
+c	ANedit	anplus.vim
+c	ANcd	anplus.vim
+c	ANonce	anplus.vim
+c	ANfeed	anplus.vim
+c	ANscanCurFile	anplus.vim
+f	AN_PtagCompl	anplus.vim
+c	BdKeepWin	bufclose.vim

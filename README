@@ -1,0 +1,43 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2818
+
+Asneeded allows loading a script by the name of a command or function that
+the script defines.  You can use :AN to load by a command; functions are
+loaded automatically (via FuncUndefined).
+
+Example (this is supposed to work with the default setup):
+
+	:AN ANedit
+
+This will source the script  AsNeeded/anplus.vim  (located below the
+'runtimepath') which defines the :ANedit command.
+
+Before :AN can be used, user scripts need to be scanned with :ANmakeTags to
+create ANtags files.  These files (like normal tags files) map commands and
+functions to script file names.  In order to find ANtags files,
+g:asneeded_path needs to be set up properly.
+
+This script has the same purpose as the AsNeeded plugin created by DrChip
+(vimscript #915).
+
+The ANtags file format is compatible, but paths included in file names are
+not recognized.  In other words, each directory needs its own ANtags file.
+
+
+Comparison (not to be taken too seriously...) of both scripts:
+
+Advantages:
+- no creation of temporary buffers
+- configurable load path (load scripts from more than one location)
+- command-line completion instead of a menu
+- :ANmakeTags creates tags for certain files, not for a whole directory
+- :AN only loads a script if the command argument is not defined yet
+- single tags can be disabled in the ANtags file to solve ambiguities
+
+Left Offs:
+- mappings are not recognized (at least not per default)
+- no "on-the-fly" mode: search for functions and commands requires an ANtags
+  file
+- :AN only takes a command name as argument (not a function name)
+- no creation of skeleton commands (beyond purpose)
+
+DrChip's AsNeeded version: 17c

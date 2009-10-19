@@ -1,0 +1,499 @@
+*asneeded.txt*	Loading of functions and commands as needed
+
+		For Vim 7.0 by Andy Wokula <anwoku@yahoo.de>
+		Last Change: Oct 19, 2009
+
+==============================================================================
+						*asneeded* *asneeded.vim*
+Intro		|asneeded-intro|
+Installation	|asneeded-install|
+Commands	|:AN| |:ANX| |:ANmakeTags| |:ANrefresh|
+Functions	|asneeded#Exists()| ...
+Configuration	|g:asneeded_path| |g:asneeded_func_ignpat|
+the tags file	|ANtags|
+
+extras from |anplus.vim|: |:ANcd| |:ANedit| |:ANfeed| ...
+
+==============================================================================
+INTRO						*asneeded-intro*
+
+Asneeded allows loading a script by the name of a command or function that the
+script defines.  You can use |:AN| to load by a command; functions are loaded
+automatically (via |FuncUndefined|).
+						*asneeded-usage*
+Example (this is supposed to work with the default setup): >
+	:AN ANedit
+This will source the script  AsNeeded/anplus.vim  (located below the
+'runtimepath') which defines the |:ANedit| command.
+
+Before |:AN| can be used, user scripts need to be scanned with |:ANmakeTags|
+to create |ANtags| files.  These files (like normal tags files) map commands
+and functions to script file names.  In order to find ANtags files,
+|g:asneeded_path| needs to be set up properly.
+
+This script has the same purpose as the AsNeeded plugin created by DrChip
+(Vimscript #915).
+
+==============================================================================
+INSTALLATION					*asneeded-install*
+
+Asneeded comes in a ZIP-archive, easy to inspect with your file manager.
+
+There is a new folder "AsNeeded".
+
+Asneeded will not work together with DrChip's script, you should first
+uninstall at least its plugin and doc file.
+
+You can now unpack and do :helptags
+
+==============================================================================
+COMMANDS
+
+						*:AN*
+:AN {cmd} ...		Load a script that defines the user command {cmd}, but
+			only if {cmd} does not exist yet.  It will do so for
+			each argument.
+
+			Similarly, there is completion for the command name,
+			but only if {cmd} does not exist yet.
+
+			If there are matches for {cmd} in more than one
+			script, the first match will win (first encountered
+			ANtags file, first matching line).
+
+			Looking up {cmd} requires an |ANtags| file and a
+			properly set up |g:asneeded_path| variable.
+
+			Each invocation of :AN checks the known ANtags files
+			for changes.  Thus the second Command-line below
+			will execute slower than the first: >
+				:AN FooCmd BarCmd
+				:AN FooCmd | AN BarCmd
+<
+			Variants of this command: |:ANX| |:ANfeed| |:ANfunc|
+
+						*:ANX*
+:ANX {cmd}		Like |:AN|, and immediately execute {cmd}.
+
+			{cmd} can be a complete command, including a range,
+			arguments and |:bar|.
+
+			{cmd} will be executed at top level, not from within
+			a function.
+
+						*:ANmakeTags*
+:ANmakeTags {filepat} ...
+			Scan the files given with {filepat} for commands and
+			functions and append (actually merge) the resulting
+			tags to |ANtags| files.
+
+			Each {filepat} can include an absolute or relative
+			path (relative to the current directory) and glob
+			patterns.  Each encountered directory will get its own
+			ANtags file.
+
+			{filepat} can be a special char |:_%|, for example the
+			following command updates the tags for the current
+			file: >
+				ANmakeTags %
+<
+			Mere directories specified with {filepat} are ignored.
+			For example, this does nothing: >
+				:ANmakeTags .
+<
+			If an ANtags file becomes empty, it will be deleted
+			or not created at all.
+
+			If an argument file does not exist, remaining tags
+			for it will be removed from the ANtags file.
+
+			Scanning / parsing limits:
+			- line continuation is not supported, for example
+			  :command and MyCmdName must be on the same line
+			- no attempt to unwrap  :exe "com" ...
+
+:ANmakeTags[!]		Clean up known existing ANtags files: Tag lines for
+			non-existing scripts are removed, including lines that
+			disable tags.
+
+			With [!], also re-scan existing script files.
+
+			Note: With [!], and if you source anmap.vim only for
+			occasion and don't have it enabled right now, you will
+			loose all tags for mappings so far being collected in
+			ANtags files.  But if you have anmap.vim enabled, ALL
+			scripts will be scanned for mappings.  These are two
+			bad options ...
+
+						*:ANrefresh*
+:ANrefresh		Init again: read g:asneeded_path (that is, update the
+			list of known ANtags files), and read the tags from
+			all these ANtags files.
+
+==============================================================================
+FUNCTIONS
+
+For experimenting ...
+
+						*asneeded#Exists()*
+asneeded#Exists({expr})
+			Like |exists()|, but returns 4 if Asneeded can source
+			a script to make the command or function available.
+
+asneeded#ScanFile({fqname}, {scancfg})
+			{fqname} path to the file
+			{scancfg} (dict) which kind of tags to extract
+			example {scancfg} is |g:asneeded#scancfg|
+			Returns a list of pairs: [["c", "cmdname"], ..., ["f",
+			"funcname"], ...]
+
+asneeded#ScanLines({lines}, {scandef})
+			{scandef} (dict) value from {scancfg} dict
+			{scandef}.flag	"c" or "f", ...
+			{scandef}.pat	pattern for command or function
+					definition, with \(...\) enclosing the
+					tag name
+
+			{lines} (list) lines to scan; will be destroyed,
+			you should create a copy first.
+
+			Returns a list of found tag names.
+			Example: >
+				:echo asneeded#ScanLines(getline(1,"$"),
+					\ g:asneeded#scancfg.func)
+
+asneeded#Expand({fspeclist})
+			{fspeclist} (list) list of expand() arguments.
+			Returns a list of {"dir": {dir}, "fnames": [...]}
+			entries, in which {dir} is a full qualified name
+			including a trailing path separator and in which no
+			{dir} will occur twice.
+			Similar to expand() ... when specifying non-existing
+			files, these are not sorted out.
+
+==============================================================================
+						*anplus.vim*
+File: asneeded/anplus.vim
+Provides some additional commands, which need to be enabled first with :AN,
+for example: >
+	:AN ANcall
+Of course you can also just source the script.
+
+						*:ANfunc*
+:ANfunc {name}[(]
+			Like |:AN|, but for a function name. |anplus.vim|
+			Normally, this is not needed.
+
+						*:ANcd*
+:ANcd [{ptag}]		:cd to the directory of an ANtags file.  {ptag}s are
+			(internal) shortcuts for these locations.  |anplus.vim|
+			
+			Without argument, list the ptags (with their
+			associated directories) and prompt for one to be typed
+			in.  |anplus.vim|
+
+						*:ANedit*
+:ANedit[!] {name}	:edit the script that would be sourced with |:AN| or
+			:ANcall.  The argument completion includes commands
+			AND functions, also when these are already defined.
+			The optional bang is given to the :edit command.
+			|anplus.vim|
+
+						*:ANfeed*
+:ANfeed {cmd}		Like |:AN|, but also place {cmd} in the Command-line.
+			Like with |:ANX|, this avoids the need to type the
+			command again! |anplus.vim|
+
+			:ANfeed is for interactive use, to get Cmdline
+			completion etc, but it is also smart enough to not
+			feed {cmd} when executed from a function or script.
+
+						(TODO)
+:ANselect {namepat}	List the scripts that define commands or functions
+			matching {namepat}, using the information in the
+			ANtags files.  {namepat} = regexp
+			Then prompt to either edit or source the selected
+			script, or edit the ANtags file of the selected
+			script! |anplus.vim|
+
+						*:ANonce*
+:ANonce[!] [{ptag} ...]
+:ANonce all
+			Make commands stop checking specified ANtags files for
+			changes.  Can be useful if |getftime()| is slow for
+			whatever reason. |anplus.vim|
+			
+			For {ptag}, see |:ANcd|.
+			
+			With first argument "all", include all ptags.
+			Without argument, print what is currently disabled.
+
+			With [!], re-enable the checking.  "all" is not
+			allowed, use ":ANonce!" instead (without arguments).
+
+			Even with this command, all ANtags files are checked
+			at least once.
+
+						*anmap.vim* *:ANmap*
+:ANmap {lhs}		Like |:AN|, but for a mapping.  |anmap.vim|
+			Mappings can only start with <Leader> or <Plug>.
+
+			anmap.vim is still experimental
+			- be cautious when using ":ANmakeTags!"
+			- completion: includes already defined mappings
+			- anmap.vim: not yet to be used as a plugin (will
+			  immediately source the autoload script)
+			- :ANedit does not support mappings
+
+==============================================================================
+CUSTOMIZATION
+
+						*g:asneeded_path*
+g:asneeded_path		Path to search for |ANtags| files when looking up
+			tags.  It can contain several comma-separated,
+			absolute or relative paths.
+
+			The default is "AsNeeded".  This will find all
+			"AsNeeded/ANtags" files below the 'runtimepath'
+			folders.  Relative paths are always relative to
+			'runtimepath' folders.
+
+			After adding or removing entries during session,
+			|:ANrefresh| should be executed.
+
+			It is allowed to prepend each entry with
+				{ptag}| ~
+			(ptag is short for "path tag") to get other than the
+			auto-generated ptag names (AN1, AN2, ...).  Useful
+			only for |:ANcd| yet.
+
+						*g:asneeded_func_ignpat*
+g:asneeded_func_ignpat	Pattern for function names to be ignored.
+			For example, the taglist plugin (Vimscript #273)
+			installs its own FuncUndefined autocommands: >
+			    :au FuncUndefined
+<				... ~
+				Tlist_*   source ...\plugin\taglist.vim ~
+				TagList_* source ...\plugin\taglist.vim ~
+
+			The default value is '^T\%[ag]list_' to prevent
+			handling these functions.
+
+						*g:asneeded#scancfg*
+g:asneeded#scancfg	(dict)
+			Patterns to identify command and function definitions.
+			default {"com": {scandef}, "func": {scandef}}
+
+			{scandef} (dict)
+				"flag":	   "c" or "f" or ...
+				"fastpat": '\<com' or '\<fu' or ...
+				"pat": 'very long ...'
+
+			Lines of a file will be scanned in several passes, one
+			pass for each {scandef}.  For speedup, the {fastpat}s
+			will be \|-joined to pre-filter lines once for the
+			scanning process.
+
+==============================================================================
+FILES
+						*ANtags*
+File containing the Asneeded tags.
+
+Each ANtags file exclusively contains tags for vim scripts from the same
+folder!
+
+Create ANtags files: |:ANmakeTags|
+Make sure ANtags files can be found: |g:asneeded_path|
+
+Refreshing
+----------
+The locations of ANtags files are cached, i.e. |g:asneeded_path| is only
+checked once (when looking up the first tag).  You can manually check
+g:asneeded_path after a change (e.g. when another ANtags file has been added)
+with |:ANrefresh|.
+
+Changes to known ANtags files are always detected (by checking timestamps).
+
+If a script file is removed, leaving tags in the ANtags file, :ANmakeTags can
+be executed with the script file as argument to remove these tags.  Or without
+argument, |:ANmakeTags| will check all currently known ANtags files for
+removed scripts.
+
+Edit an ANtags file (optional):
+-------------------------------
+You can disable a tag: change
+c	MyCommand	FoolishScript.vim ~
+into
+-c	MyCommand	FoolishScript.vim ~
+
+This will give a script later in |g:asneeded_path| the chance to be sourced
+when :AN MyCommand is executed.
+
+Function tags can be disabled the same way.
+
+Q: Why not just delete these tag lines?
+A: When running ANmakeTags again on a script, it will keep disabled lines
+   disabled.
+
+==============================================================================
+						*asneeded-autorc*
+
+Asneeded will check once for a script autoload/autorc.vim.  There is no
+problem when this script doesn't exist.
+
+Two ways of autoloading{{{
+
+I use a script  autoload/autorc.vim  for "transparent" autoloading of certain
+plugins.  Autorc is my hand-crafted extension to the vimrc, originally there
+is no dependency between Asneeded and autorc.
+
+autorc's principle:
+Plugins for autoloading are put into a special folder below the 'runtimepath',
+e.g. into our very "asneeded" folder.  In the vimrc, I map some keys (or
+define some commands) from a desired plugin.  Pressing such a key first calls
+autorc#L() to load the plugin and then executes itself.  Before autorc#L() can
+source the plugin, it must first remove all the manually created
+mappings/commands defined in the vimrc.
+
+We get a conflict when both Asneeded and autorc can load the same script.  If
+Asneeded itself loads the script, overhead from the vimrc is not removed.
+Thus Asneeded must be aware of autorc, and let it load a script if possible.
+
+autorc's "API" exposed to Asneeded
+----------------------------------
+variables ~
+g:autorc#loaded
+	exists("g:autorc#loaded") can be used to check for autorc.vim.  The
+	check will automatically load the script.
+
+functions ~
+func autorc#CanLoad(sname, inrtp)
+	returns 1 if autorc can load a given script
+	{sname}	 name of the script to load = file name without path and
+		 extension
+	{inrtp}  path relative to the 'runtimepath', where the caller (i.e.
+		 Asneeded) looks for the script
+func autorc#L(sname)
+	source the given script, remove overhead from the vimrc
+	{sname}  name of the script
+
+Example conflict
+----------------
+two ways of loading wokmarks.vim:
+	:normal tt
+	:echo Wokmarks_GetMark(".")
+
+_vimrc ~
+map t :<C-U>call autorc#L("wokmarks")<CR>t
+
+autoload/autorc.vim ~
+let g:autorc#loaded = 1
+let g:autorc#loadpath = "asneeded"
+let g:autorc#loadcmds = {"wokmarks": "unmap t"}
+func autorc#L(scriptname)
+func autorc#CanLoad(scriptname, rtp_rel)
+
+asneeded/wokmarks.vim ~
+nmap tt <Plug>ToggleMarkWok
+map tj <Plug>NextMarkWok
+func Wokmarks_GetMark(lnum_expr)
+
+asneeded/ANtags ~
+f	Wokmarks_GetMark	wokmarks.vim
+
+autoload/asneeded.vim ~
+}}}
+
+==============================================================================
+ETC
+
+TODO {{{
+- asneeded/anmap.vim: avoid 
+	:call asneeded#GetObj().MkJmpTags(s:tkind)
+  at source time
+  (make it possible to use anmap.vim as a plugin ... don't make it source the
+  autoload script at startup)
+- decide: "AsNeeded" or "asneeded" or "Asneeded"?
+- check compatibility with DrChip's script
+- automated testing
+- does it work on non-win32 systems?
+? recursion: do something like
+	:ANonce all
+	:source script
+	:ANonce!
+? prevent dead-locks (silly, wouldn't work either without asneeded)
+		call Air()
+	script A:
+		call Beer()
+		func Air() ...
+	script B: 
+		call Air()
+		func Beer() ...
+
+DONE
++ 21-04-2009 ANtags file: save timestamp for each script file?
+  ! NO (too much trouble for small benefits)
+? 24-04-2009 what if a function call loads a script for which autoloaded
+  commands are defined which require a previous "delcom"?
+  ! check the tags for commands to delete
+  ! 09-06-2009 no issue at all
++ relative paths below runtimepath
++ 05-05-2009 currently a big mess
+  ! now: 18-05-2009
++ :command tags (one more pass? -- something in between)
++ don't: update g:asneeded_path
++ 22-05-2009 :ANmakeTags {ne-script}
+  {ne-script} = not existing script file: remove tags for {ne-script}
+  ! asneeded#Expand(): replace glob() with expand()
+  ! asneeded#ScanFile(): don't report read errors, just return []
++ tags for <Plug>mappings (requires an improved structure)
++ check functions that call asneeded#GetObj():
+  asneeded#TaggedFiles() vs. s:asneeded.TaggedFiles()
+  asneeded#Exists() vs. s:asneeded.Exists()
++ 18-06-2009 Bug:
+  if :GfnStd exists, but :Gfn not, make it possible to complete and load
+  ":Gfn":  exists(":GfnStd") == 2, exists(":Gfn") == 1
+  exists(":Gfn") isn't zero, because ":Gfn" executes ":GfnStd"
+
+}}}
+Comparison with DrChip's AsNeeded script {{{
+				 ... this is neither complete nor accurate ...
+
+Improvements:
+- no creation of temporary buffers
+- configurable load path: |g:asneeded_path|, look for ANtags files in more
+  than one location
+- entries in an |ANtags| file are always local to the directory
+- |:ANmakeTags| creates tags for certain files, not for a whole directory.
+- |:AN| provides completion of loadable commands
+- |:AN| only loads a script if the command argument is not defined yet
+- single tags can be disabled in the |ANtags| file to solve ambiguities, or to
+  just disable useless functions
+
+Drop Downs:
+- mappings are not recognized (at least not per default)
+- no "on-the-fly" mode: search for functions and commands requires an ANtags
+  file
+- |:AN| only takes a command name as argument (not a function name)
+- no menu (instead: command completion)
+- no creation of skeleton commands (beyond purpose)
+- no success messages, rather: error messages
+- readfile() doesn't allow obtaining files from the network (?)
+- ANtags files are not automatically re-generated when looking up a tag (how
+  crazy is that?)
+
+Equal:
+- compatible ANtags file format (except no paths are allowed)
+- DrChip: "AsNeeded now handles silent[!] before commands during :MkAsNeeded"
+  ? why would somebody prepend a command definition with ":silent"?
+  ! ok ...   :sil! com MyCmd   only defines :MyCmd when it doesn't exist yet
+  and will not give an error message (e.g. in plugin\getscriptPlugin.vim)
+
+DrChip:
+AsNeeded: http://vim.sourceforge.net/scripts/script.php?script_id=915
+ASTRO site:  http://mysite.verizon.net/astronaut/vim/index.html#ASNEEDED
+}}}
+
+Modeline
+vim:set tw=78 ts=8 sts=8 sw=8 ft=help fdm=marker fo=tcroqln1:
+vim:set cms=%s: ;;asn_doc

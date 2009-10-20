@@ -1,7 +1,7 @@
 *asneeded.txt*	Loading of functions and commands as needed
 
-		For Vim 7.0 by Andy Wokula <anwoku@yahoo.de>
-		Last Change: Oct 19, 2009
+		Asneeded 0.1 for Vim 7.0 by Andy Wokula <anwoku@yahoo.de>
+		Last Change: Oct 20, 2009
 
 ==============================================================================
 						*asneeded* *asneeded.vim*
@@ -187,7 +187,7 @@ Of course you can also just source the script.
 						*:ANcd*
 :ANcd [{ptag}]		:cd to the directory of an ANtags file.  {ptag}s are
 			(internal) shortcuts for these locations.  |anplus.vim|
-			
+
 			Without argument, list the ptags (with their
 			associated directories) and prompt for one to be typed
 			in.  |anplus.vim|
@@ -222,9 +222,9 @@ Of course you can also just source the script.
 			Make commands stop checking specified ANtags files for
 			changes.  Can be useful if |getftime()| is slow for
 			whatever reason. |anplus.vim|
-			
+
 			For {ptag}, see |:ANcd|.
-			
+
 			With first argument "all", include all ptags.
 			Without argument, print what is currently disabled.
 
@@ -408,7 +408,7 @@ autoload/asneeded.vim ~
 ETC
 
 TODO {{{
-- asneeded/anmap.vim: avoid 
+- 20-10-2009 asneeded/anmap.vim: avoid
 	:call asneeded#GetObj().MkJmpTags(s:tkind)
   at source time
   (make it possible to use anmap.vim as a plugin ... don't make it source the
@@ -426,7 +426,7 @@ TODO {{{
 	script A:
 		call Beer()
 		func Air() ...
-	script B: 
+	script B:
 		call Air()
 		func Beer() ...
 
@@ -454,6 +454,8 @@ DONE
   if :GfnStd exists, but :Gfn not, make it possible to complete and load
   ":Gfn":  exists(":GfnStd") == 2, exists(":Gfn") == 1
   exists(":Gfn") isn't zero, because ":Gfn" executes ":GfnStd"
+Release: 19-10-2009
++ BF: 20-10-2009 do ignore tags with path component!! (jmp dict, not alltags)
 
 }}}
 Comparison with DrChip's AsNeeded script {{{

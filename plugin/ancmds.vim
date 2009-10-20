@@ -1,10 +1,11 @@
 " Vim plugin -- setup for Asneeded
 " File:         ANcmds.vim
 " Created:      2009 Apr 20
-" Last Change:  2009 Oct 19
-" Rev Days:     17
+" Last Change:  2009 Oct 20
+" Rev Days:     18
 " Author:       Andy Wokula <anwoku@yahoo.de>
 " License:      Vim License, see :h license
+" Version:      0.1
 
 if exists("loaded_ancmds")
     finish

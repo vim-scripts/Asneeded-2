@@ -1,10 +1,11 @@
 " autoload script - main
 " File:         asneeded.vim
 " Created:      2009 Apr 19
-" Last Change:  2009 Oct 19
-" Rev Days:     37
+" Last Change:  2009 Oct 20
+" Rev Days:     38
 " Author:	Andy Wokula <anwoku@yahoo.de>
 " License:	Vim License, see :h license
+" Version:	0.1.1
 
 " Customization:
 " Variables: {{{
@@ -284,7 +285,7 @@ func! s:asneeded.MkJmpTags(tkind) abort "{{{
 	let taglist = copy(self.alltags[ptag])
 	call filter(taglist, 'v:val[0] ==# flag')
 	for [_, tagname, scriptname] in taglist
-	    if !has_key(jmptags, tagname)
+	    if !has_key(jmptags, tagname) && scriptname !~ '[\\/]'
 		let jmptags[tagname] = [ptag, scriptname]
 	    endif
 	endfor
